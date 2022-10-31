@@ -22,6 +22,8 @@ class MainActivity : AppCompatActivity() {
 
         val restaurants = mutableListOf<YelpRestaurant>()
         val adapter = RestaurantsAdapter(this, restaurants)
+        val foodName = intent.getStringExtra("FoodName")
+        val Location = intent.getStringExtra("Location")
         rvRestaurants.adapter = adapter
         rvRestaurants.layoutManager = LinearLayoutManager(this)
 
@@ -29,21 +31,25 @@ class MainActivity : AppCompatActivity() {
             Retrofit.Builder().baseUrl(Base_URL).addConverterFactory(GsonConverterFactory.create())
                 .build()
         val yelpService = retrofit.create(YelpService::class.java)
-        yelpService.searchRestaurants("Bearer $API_KEY", "Avocado Toast", "New York").enqueue(object : Callback<YelpSearchResult> {
-            override fun onResponse(call: Call<YelpSearchResult>, response: Response<YelpSearchResult>) {
-                Log.i(TAG, "onResponse $response")
-                val body = response.body()
-                if (body == null) {
-                    Log.w(TAG, "Did not receive valid response body from Yelp API... exiting")
-                    return
-                }
-                restaurants.addAll(body.restaurants)
-                adapter.notifyDataSetChanged()
-            }
+        if (foodName != null) {
+            if (Location != null) {
+                yelpService.searchRestaurants("Bearer $API_KEY", foodName, Location).enqueue(object : Callback<YelpSearchResult> {
+                    override fun onResponse(call: Call<YelpSearchResult>, response: Response<YelpSearchResult>) {
+                        Log.i(TAG, "onResponse $response")
+                        val body = response.body()
+                        if (body == null) {
+                            Log.w(TAG, "Did not receive valid response body from Yelp API... exiting")
+                            return
+                        }
+                        restaurants.addAll(body.restaurants)
+                        adapter.notifyDataSetChanged()
+                    }
 
-            override fun onFailure(call: Call<YelpSearchResult>, t: Throwable) {
-                Log.i(TAG, "onFailure $t")
+                    override fun onFailure(call: Call<YelpSearchResult>, t: Throwable) {
+                        Log.i(TAG, "onFailure $t")
+                    }
+                })
             }
-        })
+        }
     }
 }
